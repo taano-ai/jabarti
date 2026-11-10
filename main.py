@@ -22,10 +22,14 @@ def download_and_filter():
         local = hf_hub_download(repo_id=REPO,repo_type="dataset", filename=filename)
         df = pd.read_parquet(local)
         if name in Train_splits: 
+            # Limit repeated examples: keep at most 20 rows per unique text
+            # to avoid excessive repetition in the dataset.
             df = (
                 df.sort_values(["text", "label"])
                 .groupby("text", sort=False)
                 .head(MAX_CHUNK).reset_index(drop=True)
             )
-
+        output_path = OUTPUT_DIR / f"{name}_filtered.parquet"
+        df.to_parquet(output_path, index=False)
+        print(f"Saved to {output_path}")
 download_and_filter()
