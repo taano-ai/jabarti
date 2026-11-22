@@ -48,9 +48,9 @@ def train_bpe(words, num_merges):
     return words, merges
 
 
-def apply_merges(chars, merges):
+def apply_merges(string, merges):
     """Encode one word: replay the recipe in the order it was learned."""
-    words = [chars]
+    words = [list(string)]
     for pair in merges:
         words = merge_pair(words, pair)
     return words[0]
@@ -74,9 +74,9 @@ def build_vocab(alphabet, merges):
     return vocab
 
 
-def encode(chars, merges, vocab):
+def encode(text, merges, vocab):
     """text pieces -> IDs. Unknown pieces become the <unk> ID."""
-    pieces = apply_merges(chars, merges)
+    pieces = apply_merges(text, merges)
     return [vocab.get(p, vocab["<unk>"]) for p in pieces]
 
 
@@ -89,6 +89,6 @@ if __name__ == "__main__":
     print("\nmerges:", merges)
     print("vocab :", vocab)
 
-    word = ["▁", "l", "o", "w", "l", "y"]  # "▁lowly"
+    word = "▁lowly"
     print("\npieces:", apply_merges(word, merges))
     print("ids   :", encode(word, merges, vocab))
