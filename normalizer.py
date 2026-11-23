@@ -15,5 +15,5 @@ def build_normalizer():
 def normalize_text(text):
     return build_normalizer().normalize_str(text)
 
-res = normalize_text(text)
-print(res)
+# res = normalize_text(text)
+# print(res)

@@ -1,0 +1,187 @@
+{
+  "version": "1.0",
+  "truncation": null,
+  "padding": null,
+  "added_tokens": [
+    {
+      "id": 0,
+      "content": "<unk>",
+      "single_word": false,
+      "lstrip": false,
+      "rstrip": false,
+      "normalized": false,
+      "special": true
+    }
+  ],
+  "normalizer": {
+    "type": "Sequence",
+    "normalizers": [
+      {
+        "type": "NFC"
+      },
+      {
+        "type": "Replace",
+        "pattern": {
+          "Regex": "[\\u064B-\\u0652\\u0640]"
+        },
+        "content": ""
+      },
+      {
+        "type": "Replace",
+        "pattern": {
+          "String": "أ"
+        },
+        "content": "ا"
+      },
+      {
+        "type": "Replace",
+        "pattern": {
+          "String": "إ"
+        },
+        "content": "ا"
+      },
+      {
+        "type": "Replace",
+        "pattern": {
+          "String": "آ"
+        },
+        "content": "ا"
+      },
+      {
+        "type": "Replace",
+        "pattern": {
+          "String": "ى"
+        },
+        "content": "ي"
+      },
+      {
+        "type": "Replace",
+        "pattern": {
+          "Regex": "[ \\t]+"
+        },
+        "content": " "
+      }
+    ]
+  },
+  "pre_tokenizer": {
+    "type": "Metaspace",
+    "replacement": "▁",
+    "prepend_scheme": "always",
+    "split": true
+  },
+  "post_processor": null,
+  "decoder": {
+    "type": "Metaspace",
+    "replacement": "▁",
+    "prepend_scheme": "always",
+    "split": true
+  },
+  "model": {
+    "type": "BPE",
+    "dropout": null,
+    "unk_token": "<unk>",
+    "continuing_subword_prefix": null,
+    "end_of_word_suffix": null,
+    "fuse_unk": false,
+    "byte_fallback": false,
+    "ignore_merges": false,
+    "vocab": {
+      "<unk>": 0,
+      "ا": 1,
+      "ب": 2,
+      "ة": 3,
+      "ح": 4,
+      "د": 5,
+      "ر": 6,
+      "س": 7,
+      "ط": 8,
+      "ف": 9,
+      "ل": 10,
+      "م": 11,
+      "ي": 12,
+      "▁": 13,
+      "▁ا": 14,
+      "مد": 15,
+      "▁ال": 16,
+      "رس": 17,
+      "مدرس": 18,
+      "▁المدرس": 19,
+      "▁المدرسة": 20,
+      "حمد": 21,
+      "في": 22,
+      "▁في": 23,
+      "▁احمد": 24,
+      "ال": 25,
+      "طال": 26,
+      "▁الي": 27,
+      "▁الطال": 28,
+      "▁الطالب": 29
+    },
+    "merges": [
+      [
+        "▁",
+        "ا"
+      ],
+      [
+        "م",
+        "د"
+      ],
+      [
+        "▁ا",
+        "ل"
+      ],
+      [
+        "ر",
+        "س"
+      ],
+      [
+        "مد",
+        "رس"
+      ],
+      [
+        "▁ال",
+        "مدرس"
+      ],
+      [
+        "▁المدرس",
+        "ة"
+      ],
+      [
+        "ح",
+        "مد"
+      ],
+      [
+        "ف",
+        "ي"
+      ],
+      [
+        "▁",
+        "في"
+      ],
+      [
+        "▁ا",
+        "حمد"
+      ],
+      [
+        "ا",
+        "ل"
+      ],
+      [
+        "ط",
+        "ال"
+      ],
+      [
+        "▁ال",
+        "ي"
+      ],
+      [
+        "▁ال",
+        "طال"
+      ],
+      [
+        "▁الطال",
+        "ب"
+      ]
+    ]
+  }
+}

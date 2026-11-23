@@ -1,13 +1,6 @@
 from collections import Counter
-
-# Corpus: what pre-tokenization hands to BPE (each chunk split into characters)
-corpus = [
-    ["▁", "l", "o", "w"],
-    ["▁", "l", "o", "w"],
-    ["▁", "l", "o", "w", "e", "r"],
-]
-
-
+from tokenizers import Tokenizer, models, pre_tokenizers, trainers, Regex
+from normalizer import build_normalizer
 def count_pairs(words):
     """Count how often each pair of neighbouring symbols appears."""
     c = Counter()
@@ -48,9 +41,9 @@ def train_bpe(words, num_merges):
     return words, merges
 
 
-def apply_merges(string, merges):
+def apply_merges(chars, merges):
     """Encode one word: replay the recipe in the order it was learned."""
-    words = [list(string)]
+    words = [chars]
     for pair in merges:
         words = merge_pair(words, pair)
     return words[0]
@@ -74,21 +67,42 @@ def build_vocab(alphabet, merges):
     return vocab
 
 
-def encode(text, merges, vocab):
+def encode(chars, merges, vocab):
     """text pieces -> IDs. Unknown pieces become the <unk> ID."""
-    pieces = apply_merges(text, merges)
+    pieces = apply_merges(chars, merges)
     return [vocab.get(p, vocab["<unk>"]) for p in pieces]
 
 
+
+# ---------- the two steps your toy BPE was missing ----------
+
+pre_tok = pre_tokenizers.Metaspace(prepend_scheme="always")
+
+texts = [
+    "أَحْمَد إِلَى المَدْرَسَة",
+    "احمد في المدرسة",
+    "الطالب في المدرسة",
+]
+test = "أَحْمَد في المدرسة"
+NUM_MERGES = 16
+
+
+def to_chunks(text):
+    """normalize -> pre-tokenize -> chunk strings like '▁احمد'"""
+    return [piece for piece, _ in pre_tok.pre_tokenize_str(build_normalizer().normalize_str(text))]
+
+
 if __name__ == "__main__":
-    # Alphabet must be taken BEFORE training (training changes the words)
-    alphabet = get_alphabet(corpus)
-    _, merges = train_bpe(corpus, 13)
+
+    chunks = [list(c) for t in texts for c in to_chunks(t)]
+    alphabet = get_alphabet(chunks)
+    _, merges = train_bpe(chunks, NUM_MERGES)
     vocab = build_vocab(alphabet, merges)
 
-    print("\nmerges:", merges)
-    print("vocab :", vocab)
+    toy_pieces = [p for c in to_chunks(test) for p in apply_merges(c, merges)]
+    toy_ids = [vocab.get(p, 0) for p in toy_pieces]
 
-    word = "▁lowly"
-    print("\npieces:", apply_merges(word, merges))
-    print("ids   :", encode(word, merges, vocab))
+
+    print("\nMY toy pieces:", toy_pieces)
+    print("\nMY toy ids:", toy_ids)
+    
