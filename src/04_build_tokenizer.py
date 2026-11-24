@@ -38,6 +38,34 @@ with open(CORPUS_PATH, encoding="utf-8") as f:
     # a file is an iterator of lines; strip() removes the "\n" so it never enters the vocab
     tokenizer.train_from_iterator((line.strip() for line in f), trainer)
 
+# ---------- REMEMBER: the tutor's way for a big dataset (commented out, kept for revision) ----------
+# Same training, but the texts come from a pandas DataFrame `df` with a "text" column,
+# are fed in BATCHES, and the trainer gets two extra settings.
+#
+# def corpus_iterator(df, batch_size=1000):
+#     texts = df["text"].tolist()                          # the whole column as a Python list
+#     for i in range(0, len(texts), batch_size):           # jump 1000 texts at a time: 0, 1000, 2000...
+#         yield texts[i: i + batch_size]                   # yield = hand over ONE batch, then pause
+#                                                          # (a generator: never builds everything in memory)
+#
+# def train(tokenizer, df):
+#     trainer = trainers.BpeTrainer(
+#         vocab_size=VOCAB_SIZE,
+#         min_frequency=MIN_FREQUENCY,    # a pair must appear at least this many times to be merged
+#                                         # (default 0). Blocks merges made from one-off accidents.
+#         special_tokens=SPECIAL_TOKENS,
+#         show_progress=True,             # the progress bars you see in the terminal
+#     )
+#     tokenizer.train_from_iterator(
+#         corpus_iterator(df),            # each item is a LIST of texts: a batch, which is faster
+#         trainer=trainer,
+#         length=len(df),                 # total number of texts: only so the progress bar knows the end
+#     )
+#     return tokenizer
+#
+# Our file version of the same idea: one text per line, no batches.
+# With a tiny corpus like ours, a high min_frequency would stop the merges early.
+
 # ---------- 3. save: tokenizer.json is the frozen contract with the model ----------
 # one file holds everything: normalizer, pre-tokenizer, vocab + merges, decoder
 tokenizer.save(str(TOKENIZER_PATH))
