@@ -1,6 +1,8 @@
 from collections import Counter
-from tokenizers import Tokenizer, models, pre_tokenizers, trainers, Regex
-from normalizer import build_normalizer
+"""
+stage 3 by hand: models.BPE + BpeTrainer
+"""
+
 def count_pairs(words):
     """Count how often each pair of neighbouring symbols appears."""
     c = Counter()
@@ -72,37 +74,50 @@ def encode(chars, merges, vocab):
     pieces = apply_merges(chars, merges)
     return [vocab.get(p, vocab["<unk>"]) for p in pieces]
 
-
-
-# ---------- the two steps your toy BPE was missing ----------
-
-pre_tok = pre_tokenizers.Metaspace(prepend_scheme="always")
-
-texts = [
-    "أَحْمَد إِلَى المَدْرَسَة",
-    "احمد في المدرسة",
-    "الطالب في المدرسة",
-]
-test = "أَحْمَد في المدرسة"
-NUM_MERGES = 16
-
-
-def to_chunks(text):
-    """normalize -> pre-tokenize -> chunk strings like '▁احمد'"""
-    return [piece for piece, _ in pre_tok.pre_tokenize_str(build_normalizer().normalize_str(text))]
-
+# ---------------------------------------------------------------------------
+# THE MISSING PARTS (commented out so this file stays standalone)
+# This file only does stage 3 (BPE). On real text, stages 1 and 2 must run first:
+#   raw text -> normalize -> pre-tokenize -> chunks -> BPE
+# To plug them in, uncomment this block (it needs normalizer.py and pre_tokenizer.py).
+#
+# from normalizer import build_normalizer
+# from pre_tokenizer import build_pre_tokenizer
+#
+# normalizer = build_normalizer()
+# pre_tok = build_pre_tokenizer()
+#
+#
+# def to_chunks(text):
+#     """normalize -> pre-tokenize -> chunk strings like '▁احمد'"""
+#     normalized = normalizer.normalize_str(text)           # stage 1: clean the text
+#     # stage 2: pre_tokenize_str gives (chunk, (start, end)); we keep only the chunk
+#     return [piece for piece, _ in pre_tok.pre_tokenize_str(normalized)]
+#
+#
+# texts = ["أَحْمَد إِلَى المَدْرَسَة", "احمد في المدرسة", "الطالب في المدرسة"]
+# # each chunk becomes a list of characters, which is what count_pairs / merge_pair expect
+# corpus = [list(chunk) for text in texts for chunk in to_chunks(text)]
+#
+# # to encode a new sentence: chunk it first, then run apply_merges on EACH chunk
+# # pieces = [p for chunk in to_chunks("أَحْمَد في المدرسة") for p in apply_merges(chunk, merges)]
+# 
 
 if __name__ == "__main__":
+    # corpus = chunks that pre-tokenization would give, split into characters
+    corpus = [
+        ["▁", "l", "o", "w"],
+        ["▁", "l", "o", "w"],
+        ["▁", "l", "o", "w"],
+        ["▁", "l", "o", "w", "e", "r"],
+        ["▁", "n", "e", "w"],
+        ["▁", "n", "e", "w", "e", "r"],
+    ]
+    NUM_MERGES = 4
 
-    chunks = [list(c) for t in texts for c in to_chunks(t)]
-    alphabet = get_alphabet(chunks)
-    _, merges = train_bpe(chunks, NUM_MERGES)
+    alphabet = get_alphabet(corpus)             # BEFORE training: training changes the words
+    _, merges = train_bpe(corpus, NUM_MERGES)
     vocab = build_vocab(alphabet, merges)
 
-    toy_pieces = [p for c in to_chunks(test) for p in apply_merges(c, merges)]
-    toy_ids = [vocab.get(p, 0) for p in toy_pieces]
-
-
-    print("\nMY toy pieces:", toy_pieces)
-    print("\nMY toy ids:", toy_ids)
-    
+    print("\nvocab :", vocab)
+    print("pieces:", apply_merges("▁lowly", merges))   # ['▁low', 'l', 'y']
+    print("ids   :", encode("▁lowly", merges, vocab))  # 'y' was never seen -> <unk> (0)
