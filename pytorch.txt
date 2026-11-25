@@ -1,0 +1,10 @@
+1) he used nvidia-smi in google colab to check so what is this and also something called cuda and gpus he talked, are there gpus for graphics and others for llms ? I need to get this well, 2) ndim is not shape ? 
+3) torch.zeros() .ones .randn .arange()  
+4) is torch like what I learned in numpy like broadasting and so on ? 
+5) he talked about one called  0 dimenaiton or  scalar no shape and ndim 0 
+6) he talked about B T C in 3d dimenation and the best easy way to get it is B of T C  dimension 
+7) importance of .view(2, 24) for sth like 2 6 4 ...
+8) you can back by back = flat.view(before shape) 
+9) x.transpos(x,y) 
+10) the error that will always repeat and talked about view after transpose makes error because of memory and best appraoch is reshape and also said others may use contigous().view()...but it's the same as reshape...
+
