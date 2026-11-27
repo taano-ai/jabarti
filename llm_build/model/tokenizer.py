@@ -1,30 +1,33 @@
 from pathlib import Path
 
+from tokenizers import Tokenizer as HFTokenizer
 
+TOKENIZER_PATH = Path(__file__).parent / "assets" / "tokenizer.json"
 
-TOKENIZER_PATH = Path(__file__).parent / "assets"/ "tokenizer.json"
-from tokenizers import Tokenizer as ParentTokenizer
 
 class Tokenizer:
-    UNK = 0
-    PAD = 1
-    EOS = 2
-    SPECIAL_TOKENS = {"<unk>": UNK, "<pad>": PAD, "<eos>":EOS}
+    UNK, PAD, EOS = 0, 1, 2
+    SPECIAL_TOKENS = {"<unk>": UNK, "<pad>": PAD, "<eos>": EOS}
 
-    def __init__(self, parent_tokenizer: ParentTokenizer):
-        self.tokenizer = parent_tokenizer
+    def __init__(self, hf_tokenizer: HFTokenizer) -> None:
+        self._tokenizer = hf_tokenizer
 
-    def load(self, path=TOKENIZER_PATH):
-        self.tokenizer = self.tokenizer.from_file(TOKENIZER_PATH)
+    @classmethod
+    def from_file(cls, path: Path = TOKENIZER_PATH) -> "Tokenizer":
+        return cls(HFTokenizer.from_file(str(path)))
 
     def normalize(self, text: str) -> str:
-        return self.tokenizer.normalizer.normalize_str(text)
-    def encode(self, text: str,asp=False)-> list[int]:
-        return self.tokenizer.encode(text, add_special_tokens=asp).ids
-    def decode(self, inputs_ids: list[int],sst=True) -> str:
-        return self.tokenizer.decode(inputs_ids,skip_special_tokens=sst)
-    def tokeinze(self, text: str, asp=False)-> list[str]:
-        return self.tokenizer.encode(text, add_special_tokens=asp).tokens
+        return self._tokenizer.normalizer.normalize_str(text)
+
+    def tokenize(self, text: str, add_special_tokens: bool = False) -> list[str]:
+        return self._tokenizer.encode(text, add_special_tokens=add_special_tokens).tokens
+
+    def encode(self, text: str, add_special_tokens: bool = False) -> list[int]:
+        return self._tokenizer.encode(text, add_special_tokens=add_special_tokens).ids
+
+    def decode(self, ids: list[int], skip_special_tokens: bool = True) -> str:
+        return self._tokenizer.decode(ids, skip_special_tokens=skip_special_tokens)
+
     @property
-    def vocab_size(self):
-        return self.tokenizer.get_vocab_size()
+    def vocab_size(self) -> int:
+        return self._tokenizer.get_vocab_size()
