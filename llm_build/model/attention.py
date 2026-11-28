@@ -1,25 +1,40 @@
-# Input: 3 tokens, 2 features each -> (3, 2)
-x = torch.tensor([[1., 0.], [0., 1.], [1., 1.]])
+import torch
+import torch.nn as nn
 
-# Weight matrices: 3 matrices shared by all tokens, each (d_model, d_model) = (2, 2)
-q_w = torch.tensor([[2.0, 0.0],
-                    [1.0, 3.0]])
 
-k_w = torch.tensor([[2.0, 1.0],
-                    [0.0, 4.0]])
+class CausalSelfAttention(nn.Module):
+    """Single-head causal attention: x -> q,k,v -> scores -> mask -> softmax -> mix v."""
 
-v_w = torch.tensor([[2.0, 5.0],
-                    [0.0, 3.0]])
+    def __init__(self, d_model: int):
+        super().__init__()
+        # 3 learned matrices shared by all tokens (your q_w, k_w, v_w).
+        # bias=False: attention projections usually have none.
+        self.Wq = nn.Linear(d_model, d_model, bias=False)  # what each token looks for
+        self.Wk = nn.Linear(d_model, d_model, bias=False)  # what each token offers
+        self.Wv = nn.Linear(d_model, d_model, bias=False)  # content each token hands over
 
-# STEP 1: build q, k, v from the same x (one row per token) -> each (3, 2)
-q = x @ q_w   # what each token is looking for
-k = x @ k_w   # what each token offers for matching
-v = x @ v_w   # content each token hands over (not used until step 4)
+    def forward(self, x):
+        # x: (batch, seq_len, d_model)
 
-# STEP 2: scores = every query vs every key (dot products) -> (3, 3)
-# scores[i][j] = how much token i's query matches token j's key
-scores = q @ k.T
+        # STEP 1: same x through three different layers -> each (batch, seq_len, d_model)
+        q = self.Wq(x)
+        k = self.Wk(x)
+        v = self.Wv(x)
 
-# STEP 3 (next): softmax on each row -> weights that are positive and sum to 1
-# STEP 4 (after): output = weights @ v -> (3, 2), same shape as x
-scores
+        # STEP 2: scores[i][j] = how much token i's query matches token j's key
+        # k.transpose(-2, -1) swaps the last two dims (k.T only works for 2D)
+        # (batch, seq_len, d) @ (batch, d, seq_len) -> (batch, seq_len, seq_len)
+        d = q.shape[-1]
+        scores = (q @ k.transpose(-2, -1)) / d ** 0.5   # scaled by sqrt(d)
+
+        # STEP 3: causal mask, block the future (above the diagonal) with -inf
+        n = scores.shape[-1]   # seq_len
+        mask = torch.triu(torch.ones(n, n, dtype=torch.bool, device=x.device), diagonal=1)
+        scores = scores.masked_fill(mask, float("-inf"))
+
+        # STEP 4: softmax per row -> positive weights summing to 1
+        weights = torch.softmax(scores, dim=-1)
+
+        # STEP 5: each token's new row = weighted mix of value rows
+        # (batch, seq_len, seq_len) @ (batch, seq_len, d_model) -> (batch, seq_len, d_model)
+        return weights @ v
